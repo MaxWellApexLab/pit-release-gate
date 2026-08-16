@@ -20,6 +20,24 @@ correlation fitted honestly on prior *completed* periods — and grades the requ
 completeness per signal, so benign signals release early and susceptible signals are
 withheld until enough of the cross-section has arrived to suppress the bias.
 
+## Statement of need
+
+Point-in-time discipline in ML pipelines currently rests on tooling that answers one
+question: *was this value readable at time t?* Feature-store as-of joins, bitemporal
+and vintage-aware storage, and purged or embargoed cross-validation all enforce
+read-time correctness, and they do it well.
+
+None of them answers a second question: given that every value read was legitimately
+readable, was the *set* of entities that had reported by t a selected sample? An
+as-of join over an incomplete cross-section is a correct join over a biased sample.
+The two failures need different remedies — the first is fixed by timestamp hygiene,
+the second only by waiting or by an explicit correction. Researchers building
+cross-sectional signals on staggered-arrival panels have had no routine, per-signal
+screen for the second. `pit-release-gate` is that screen, plus the release controller
+that acts on it: one `fit_trailing` call per signal, so reporting a susceptibility
+estimate alongside a released signal costs about as much as reporting a standard
+error.
+
 ## Install
 
 ```bash
@@ -55,6 +73,21 @@ To gate your own data, build an `AsOfDataStore` from your design matrix, signal
 values, and per-entity filing-arrival times, then call
 `ReleaseController.decide(store, t)` at each evaluation time — it returns
 `WITHHOLD`, `REWEIGHT_RELEASE`, or `RELEASE` plus the released values.
+
+## API overview
+
+Five public components, all importable from the top-level `pit_release_gate` package:
+
+| component | what it does |
+|---|---|
+| [`AsOfDataStore`](src/pit_release_gate/store.py) | Holds one period's as-filed records for a cross-sectional group: design matrix, signal values, and a filing-arrival time per entity. |
+| [`CompletenessMonitor`](src/pit_release_gate/monitor.py) | Reports the arrived fraction at an evaluation time, plus a composition-shift gauge for the arrived subset. |
+| [`SusceptibilityGate`](src/pit_release_gate/gate.py) | Estimates ρ̂, the partial correlation between filing latency and the complete-cross-section residual given observables. `fit_trailing` enforces the honest-estimation contract: prior *completed* periods only. |
+| [`PropensityReweighter`](src/pit_release_gate/reweight.py) | Inverse-filing-propensity weights. Included to make a negative result executable: reweighting on observables corrects composition, but cannot remove selection on the disturbance. |
+| [`ReleaseController`](src/pit_release_gate/controller.py) | Maps \|ρ̂\| to a required completeness `φ_req = min(1, φ_min + κ·\|ρ̂\|)` and returns `WITHHOLD` / `REWEIGHT_RELEASE` / `RELEASE` at each evaluation time. |
+
+`make_group`, `run_demo` and `demo` ([`simulate.py`](src/pit_release_gate/simulate.py))
+generate and run the known-ground-truth worked example described below.
 
 ## The known-ground-truth demo
 
@@ -109,6 +142,15 @@ See [`CITATION.cff`](CITATION.cff). If you use this software, please cite paper 
   doi    = {10.6084/m9.figshare.33158615}
 }
 ```
+
+## Community guidelines
+
+- **Report a bug or request a feature:** open an issue at
+  [github.com/MaxWellApexLab/pit-release-gate/issues](https://github.com/MaxWellApexLab/pit-release-gate/issues).
+- **Contribute:** see [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup,
+  test requirements, and pull-request process.
+- **Get help:** open an issue with a minimal reproducing example, or email
+  maxwellapexlab@proton.me.
 
 ## License
 
