@@ -212,6 +212,51 @@ def demo(n_train=10, n_eval=60):
     return run_demo(n_train=n_train, n_eval=n_eval, verbose=True)
 
 
+BADGE_MARKDOWN = (
+    '[![screened with pit-release-gate]'
+    '(https://img.shields.io/badge/screened%20with-pit--release--gate-blue)]'
+    '(https://github.com/MaxWellApexLab/pit-release-gate)'
+)
+
+
+def badge_snippet(results) -> str:
+    """README badge markdown for a completed screen, with a rho_hat summary.
+
+    Pure formatting over an existing ``run_demo`` result -- it reads the
+    result dict and returns a string. It performs no estimation and changes
+    no numerical behavior.
+
+    The badge states that the screen was RUN. It is deliberately not a
+    pass/fail claim: a susceptible verdict is as worth reporting as a
+    benign one.
+    """
+    try:
+        from . import __version__ as version
+    except ImportError:                                # pragma: no cover
+        version = ''
+
+    sigs = results['signals']
+    keys = [k for k, *_ in DEMO_SIGNALS if k in sigs]
+    n_susc = sum(bool(sigs[k]['susceptible']) for k in keys)
+    rhos = ' | '.join(f"{k} {sigs[k]['rho_trailing']:+.3f}" for k in keys)
+
+    rule = '-' * 72
+    return '\n'.join([
+        rule,
+        'Badge snippet (paste into your README):',
+        '',
+        BADGE_MARKDOWN,
+        '',
+        f'<!-- screened with pit-release-gate {version}',
+        f'     {len(keys)} signals: {len(keys) - n_susc} benign, {n_susc} susceptible',
+        f'     rho_hat: {rhos} -->',
+        '',
+        'The badge states that the screen was RUN, not that anything passed.',
+        'Point it at your own screen output to make it worth clicking.',
+        rule,
+    ])
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog='pit-release-gate',
@@ -221,8 +266,14 @@ def main(argv=None):
                     help='number of prior completed periods used to fit rho_hat (default 10)')
     ap.add_argument('--eval', dest='n_eval', type=int, default=60,
                     help='number of fresh evaluation periods (default 60)')
+    ap.add_argument('--badge', action='store_true',
+                    help='after the demo, print a README badge snippet recording '
+                         'that the screen was run (does not change the demo output)')
     a = ap.parse_args(argv)
-    run_demo(n_train=a.train, n_eval=a.n_eval, verbose=True)
+    results = run_demo(n_train=a.train, n_eval=a.n_eval, verbose=True)
+    if a.badge:
+        print()
+        print(badge_snippet(results))
 
 
 if __name__ == '__main__':

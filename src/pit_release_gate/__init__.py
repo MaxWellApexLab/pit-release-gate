@@ -18,12 +18,14 @@ ReleaseDecision      the controller's per-evaluation-time output record
 make_group           one synthetic staggered-arrival cross-section (known truth)
 run_demo             the full known-ground-truth worked example (returns dict)
 demo                 same, console-table form
+badge_snippet        README badge markdown for a completed screen run
 """
 from .controller import ReleaseController, ReleaseDecision
 from .gate import SusceptibilityGate
 from .monitor import CompletenessMonitor
 from .reweight import PropensityReweighter
-from .simulate import DEMO_POLICIES, DEMO_SIGNALS, SEED, demo, main, make_group, run_demo
+from .simulate import (DEMO_POLICIES, DEMO_SIGNALS, SEED, badge_snippet, demo, main,
+                       make_group, run_demo)
 from .store import AsOfDataStore
 
 __version__ = "0.1.0"
@@ -39,6 +41,7 @@ __all__ = [
     "run_demo",
     "demo",
     "main",
+    "badge_snippet",
     "SEED",
     "DEMO_SIGNALS",
     "DEMO_POLICIES",
