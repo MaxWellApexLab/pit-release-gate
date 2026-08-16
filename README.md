@@ -1,0 +1,118 @@
+# pit-release-gate
+
+Completeness-aware release control for staggered-arrival cross-sectional data.
+
+When the entities of a cross-section report on staggered dates — companies filing
+financial statements are the canonical case — any same-period cross-sectional signal
+computed before the last filer arrives is estimated from an incomplete, and possibly
+*selectively* incomplete, cross-section. If filing timing depends on the very
+disturbance the signal measures, releasing early produces a systematic bias
+(incomplete-cross-section leakage), while a blanket wait-for-the-deadline rule removes
+the bias at a timeliness cost paid by every signal, biased or not. `pit-release-gate`
+measures each signal's susceptibility to this bias — a disturbance-conditional partial
+correlation fitted honestly on prior *completed* periods — and grades the required
+completeness per signal, so benign signals release early and susceptible signals are
+withheld until enough of the cross-section has arrived to suppress the bias.
+
+## Install
+
+```bash
+pip install pit-release-gate        # once published to PyPI
+# or, from a source checkout:
+pip install .
+```
+
+Requires Python 3.10+ (`numpy`, `pandas`, `scipy`).
+
+## Quickstart (30 seconds)
+
+```python
+import numpy as np
+from pit_release_gate import SusceptibilityGate, ReleaseController, make_group
+
+rng = np.random.default_rng(0)
+
+# 1. Fit the susceptibility gate on prior COMPLETED periods (honest estimation:
+#    never on the period being gated — its cross-section is still incomplete).
+train = [make_group(c_a=0.3, c_x=0.7, rng=rng) for _ in range(10)]
+gate = SusceptibilityGate(threshold=0.10)
+rho = gate.fit_trailing(train)
+
+# 2. Gate a fresh, live period with the frozen estimate.
+controller = ReleaseController(gate=gate)
+live = make_group(c_a=0.3, c_x=0.7, rng=rng)
+decision = controller.run_until_release(live, policy="gated")
+
+print(f"rho_hat={rho:+.3f}  ->  {decision.action} "
+      f"at completeness {decision.completeness:.0%} ({decision.policy})")
+```
+
+To gate your own data, build an `AsOfDataStore` from your design matrix, signal
+values, and per-entity filing-arrival times, then call
+`ReleaseController.decide(store, t)` at each evaluation time — it returns
+`WITHHOLD`, `REWEIGHT_RELEASE`, or `RELEASE` plus the released values.
+
+## The known-ground-truth demo
+
+The package ships a self-contained worked example with a *planted* leakage strength,
+so the right answer is known exactly and no licensed data is needed:
+
+```bash
+pit-release-gate            # or: python -m pit_release_gate
+```
+
+It compares five release policies (`naive`, `threshold`, `reweight`, `deadline`,
+`gated`) on four signal types. Headline behavior:
+
+| signal | susceptibility ρ̂ | gated releases at | gated bias |
+|---|---|---|---|
+| Clean | ≈ +0.005 (benign) | **36%** completeness | ≈ 0 |
+| Composition (selection on observables only) | ≈ −0.036 (benign) | **39%** completeness | ≈ 0 |
+| Mild leak | ≈ −0.53 | 88% completeness | −0.099 (naive: −0.319) |
+| Strong leak | ≈ −0.87 | 100% (deadline) | **exactly 0.0** (naive: −0.386) |
+
+A sensitivity sweep of the policy slope κ shows the timeliness–bias dial:
+κ = 0.5 → release at 59% completeness (bias −0.229); κ = 1.0 → 83% (−0.118);
+κ = 2.0 → 100% (bias exactly 0). The demo is deterministic (fixed seed), and
+`tests/test_reproduces_paper.py` asserts these numbers.
+
+## Papers
+
+The method and its evaluation are developed in three public papers:
+
+1. **Correct-by-Construction Factor Computation: A Verifiably Point-in-Time Engine
+   for Tradeable Signals** — [doi:10.6084/m9.figshare.32952482](https://doi.org/10.6084/m9.figshare.32952482)
+2. **Measuring Incomplete-Cross-Section Leakage: A Matched Placebo, a Susceptibility
+   Screen, and Evidence from Taiwan and US As-Filed Data** — [doi:10.6084/m9.figshare.33061955](https://doi.org/10.6084/m9.figshare.33061955)
+3. **Susceptibility-Graded Release Control: Preventing Incomplete-Cross-Section
+   Leakage in Financial Machine-Learning Pipelines without a Blanket Timeliness
+   Penalty** — [doi:10.6084/m9.figshare.33158615](https://doi.org/10.6084/m9.figshare.33158615)
+
+This package is the reference implementation of paper 3's release controller; its
+demo reproduces the paper's controlled experiment.
+
+## Cite this
+
+See [`CITATION.cff`](CITATION.cff). If you use this software, please cite paper 3:
+
+```bibtex
+@article{wu2026releasecontrol,
+  title  = {Susceptibility-Graded Release Control: Preventing Incomplete-Cross-Section
+            Leakage in Financial Machine-Learning Pipelines without a Blanket
+            Timeliness Penalty},
+  author = {Wu, Kuan-Ta and Wu, Kuan-I},
+  year   = {2026},
+  doi    = {10.6084/m9.figshare.33158615}
+}
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+Patent pending: this software implements techniques described in pending U.S.
+patent applications. The MIT license above governs use of this code.
+
+---
+
+Max Well Apex LLC — maxwellapexlab@proton.me

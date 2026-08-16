@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pit-release-gate"
+version = "0.1.0"
+description = "Completeness-aware release control for staggered-arrival cross-sectional data: a susceptibility-graded gate that blocks incomplete-cross-section leakage without a blanket timeliness penalty"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Max Well Apex LLC", email = "maxwellapexlab@proton.me" },
+]
+keywords = [
+    "point-in-time",
+    "data-leakage",
+    "look-ahead-bias",
+    "cross-sectional",
+    "staggered-arrival",
+    "release-control",
+    "selection-bias",
+    "quantitative-finance",
+    "ml-pipelines",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/MaxWellApexLab/pit-release-gate"
+Repository = "https://github.com/MaxWellApexLab/pit-release-gate"
+Paper = "https://doi.org/10.6084/m9.figshare.33158615"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+pit-release-gate = "pit_release_gate.simulate:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

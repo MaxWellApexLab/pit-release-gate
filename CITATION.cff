@@ -1,0 +1,66 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the metadata below,
+  and cite the three papers listed under "references" (paper 3,
+  doi:10.6084/m9.figshare.33158615, is the one this package implements).
+type: software
+title: pit-release-gate
+version: 0.1.0
+date-released: '2026-08-15'
+license: MIT
+repository-code: 'https://github.com/MaxWellApexLab/pit-release-gate'
+authors:
+  - name: 'Max Well Apex LLC'
+    email: maxwellapexlab@proton.me
+abstract: >-
+  Completeness-aware release control for staggered-arrival
+  cross-sectional data: a susceptibility-graded gate that prevents
+  incomplete-cross-section leakage without a blanket timeliness penalty.
+keywords:
+  - point-in-time
+  - data-leakage
+  - look-ahead-bias
+  - cross-sectional
+  - release-control
+  - selection-bias
+references:
+  - type: article
+    title: >-
+      Correct-by-Construction Factor Computation: A Verifiably
+      Point-in-Time Engine for Tradeable Signals
+    authors:
+      - family-names: Wu
+        given-names: Kuan-Ta
+        orcid: 'https://orcid.org/0009-0006-0529-8709'
+      - family-names: Wu
+        given-names: Kuan-I
+        orcid: 'https://orcid.org/0009-0008-1455-6858'
+    year: 2026
+    doi: 10.6084/m9.figshare.32952482
+  - type: article
+    title: >-
+      Measuring Incomplete-Cross-Section Leakage: A Matched Placebo, a
+      Susceptibility Screen, and Evidence from Taiwan and US As-Filed Data
+    authors:
+      - family-names: Wu
+        given-names: Kuan-Ta
+        orcid: 'https://orcid.org/0009-0006-0529-8709'
+      - family-names: Wu
+        given-names: Kuan-I
+        orcid: 'https://orcid.org/0009-0008-1455-6858'
+    year: 2026
+    doi: 10.6084/m9.figshare.33061955
+  - type: article
+    title: >-
+      Susceptibility-Graded Release Control: Preventing
+      Incomplete-Cross-Section Leakage in Financial Machine-Learning
+      Pipelines without a Blanket Timeliness Penalty
+    authors:
+      - family-names: Wu
+        given-names: Kuan-Ta
+        orcid: 'https://orcid.org/0009-0006-0529-8709'
+      - family-names: Wu
+        given-names: Kuan-I
+        orcid: 'https://orcid.org/0009-0008-1455-6858'
+    year: 2026
+    doi: 10.6084/m9.figshare.33158615
