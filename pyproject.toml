@@ -50,6 +50,7 @@ Paper = "https://doi.org/10.6084/m9.figshare.33158615"
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
 ]
 
 [project.scripts]

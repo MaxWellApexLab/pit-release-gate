@@ -1,5 +1,11 @@
 # pit-release-gate
 
+[![CI](https://github.com/MaxWellApexLab/pit-release-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/MaxWellApexLab/pit-release-gate/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/MaxWellApexLab/pit-release-gate/branch/master/graph/badge.svg)](https://codecov.io/gh/MaxWellApexLab/pit-release-gate)
+[![PyPI](https://img.shields.io/pypi/v/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
+[![Python](https://img.shields.io/pypi/pyversions/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Completeness-aware release control for staggered-arrival cross-sectional data.
 
 When the entities of a cross-section report on staggered dates — companies filing
