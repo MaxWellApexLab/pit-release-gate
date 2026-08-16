@@ -6,7 +6,8 @@ import sys
 
 import numpy as np
 
-from pit_release_gate import AsOfDataStore, CompletenessMonitor, make_group
+from pit_release_gate import (AsOfDataStore, CompletenessMonitor, badge_snippet,
+                              make_group, run_demo)
 
 
 def test_cli_demo_runs_and_prints_verdicts():
@@ -29,6 +30,43 @@ def test_demo_main_in_process(capsys):
     text = capsys.readouterr().out
     for token in ("Clean", "Strong-leak", "gated", "deadline", "kappa"):
         assert token in text
+
+
+def test_badge_snippet_reports_the_screen_result():
+    r = run_demo(n_train=2, n_eval=4, verbose=False)
+    text = badge_snippet(r)
+
+    # the markdown a user actually pastes
+    assert "img.shields.io/badge/screened%20with-pit--release--gate-blue" in text
+    assert "github.com/MaxWellApexLab/pit-release-gate" in text
+
+    # the summary comment carries every signal's frozen rho_hat
+    for key in ("clean", "composition", "mild_leak", "strong_leak"):
+        assert key in text
+    # demo plants two benign and two susceptible signals
+    assert "2 benign, 2 susceptible" in text
+
+
+def test_badge_snippet_makes_no_pass_fail_claim():
+    text = badge_snippet(run_demo(n_train=2, n_eval=4, verbose=False)).lower()
+    assert "screened with" in text
+    assert "not that anything passed" in text
+    for forbidden in ("certif", "approv", "endors", "official", "trusted"):
+        assert forbidden not in text, f"badge output must not claim {forbidden!r}"
+
+
+def test_badge_flag_does_not_change_demo_output(capsys):
+    from pit_release_gate.simulate import main
+
+    main(["--train", "2", "--eval", "4"])
+    plain = capsys.readouterr().out
+    main(["--train", "2", "--eval", "4", "--badge"])
+    badged = capsys.readouterr().out
+
+    # the badge is strictly appended: the demo output is byte-identical
+    assert badged.startswith(plain)
+    assert "Badge snippet" in badged[len(plain):]
+    assert "Badge snippet" not in plain
 
 
 def test_completeness_monitor_fraction_and_shift():
