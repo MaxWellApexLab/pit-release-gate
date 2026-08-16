@@ -17,9 +17,7 @@ withheld until enough of the cross-section has arrived to suppress the bias.
 ## Install
 
 ```bash
-pip install pit-release-gate        # once published to PyPI
-# or, from a source checkout:
-pip install .
+pip install pit-release-gate
 ```
 
 Requires Python 3.10+ (`numpy`, `pandas`, `scipy`).
