@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+Screen your own panel. **No change to package behavior:**
+`tests/test_reproduces_paper.py` is untouched and the demo reproduces the same
+numbers as 0.1.1.
+
+- `screen_dataframe(table, value=..., trailing_k=...)` screens a long table
+  directly and returns a `pit-screen-results` record. The table may be a
+  pandas or polars DataFrame, a pyarrow Table, or a dict of arrays — columns
+  are read by duck typing, so no dataframe library is imported and none is
+  required. Datetime arrival columns are accepted.
+- `stores_from_frame` exposes the per-period stores the screen builds, for
+  callers who want to inspect or gate them individually.
+- CLI: `--csv PATH --value COLUMN` screens a user panel instead of running the
+  demo, with `--period/--arrival/--size/--trailing-k/--threshold` and the
+  existing `--export` and `--badge`. CSV reading uses the standard library.
+- The verdict convention is documented, including its noise floor: a signal is
+  susceptible if any screened period crossed the threshold, which on small
+  panels can fire on sampling noise.
+
+## 0.1.2 — unreleased (earlier work)
+
 Screen-result export. **No change to package behavior:**
 `tests/test_reproduces_paper.py` is untouched and the demo reproduces the same
 numbers as 0.1.1.

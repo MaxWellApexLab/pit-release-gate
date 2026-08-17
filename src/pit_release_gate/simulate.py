@@ -307,6 +307,80 @@ def badge_snippet(results) -> str:
     ])
 
 
+def read_csv_columns(path):
+    """Read a CSV into {column: numpy array} using the standard library only.
+
+    Numeric columns become floats; anything else stays a string array, which
+    is all the screen needs for period keys.
+    """
+    import csv as _csv
+    with open(path, newline='', encoding='utf-8-sig') as fh:
+        rows = list(_csv.DictReader(fh))
+    if not rows:
+        raise SystemExit(f'{path}: no data rows')
+    out = {}
+    for name in rows[0]:
+        raw = [r[name] for r in rows]
+        try:
+            out[name] = np.array([float(v) if v not in ('', 'NA', 'NaN', 'nan')
+                                  else np.nan for v in raw], dtype=float)
+        except ValueError:
+            out[name] = np.array(raw, dtype=object)
+    return out
+
+
+def _version():
+    try:
+        from . import __version__
+        return __version__
+    except ImportError:                                 # pragma: no cover
+        return ''
+
+
+def _screen_csv(a):
+    """Screen a user-supplied panel and print one row per signal."""
+    from .frame import screen_dataframe
+
+    data = read_csv_columns(a.csv)
+    record = screen_dataframe(
+        data, period=a.period, arrival=a.arrival, value=a.value,
+        size=a.size, trailing_k=a.trailing_k, rho_threshold=a.threshold)
+
+    print(f'screened {a.csv}: {len(record["signals"])} signal(s), '
+          f'trailing_k={a.trailing_k}, threshold={a.threshold}')
+    print(f'  {"signal":<24} {"periods":>8} {"flagged":>8} {"mean rho":>10} '
+          f'{"max |rho|":>10} {"phi_req":>8}  verdict')
+    for s in record['signals']:
+        print(f'  {s["name"]:<24} {s["periods_screened"]:>8} {s["periods_flagged"]:>8} '
+              f'{s["mean_rho"]:>+10.4f} {s["max_abs_rho"]:>10.4f} '
+              f'{s["mean_phi_req"]:>8.3f}  {s["verdict"]}')
+    t = record['totals']
+    print(f'  totals: {t["signals_benign"]} benign, {t["signals_susceptible"]} susceptible, '
+          f'{t["signal_cycles"]} signal-cycles screened')
+
+    if a.badge:
+        rule = '-' * 72
+        print()
+        print('\n'.join([
+            rule,
+            'Badge snippet (paste into your README):',
+            '',
+            BADGE_MARKDOWN,
+            '',
+            f'<!-- screened with pit-release-gate {_version()}',
+            f'     {len(record["signals"])} signals: {t["signals_benign"]} benign, '
+            f'{t["signals_susceptible"]} susceptible -->',
+            '',
+            'The badge states that the screen was RUN, not that anything passed.',
+            'Point it at your exported record, not at this repo.',
+            rule,
+        ]))
+    if a.export:
+        path = write_results(record, a.export)
+        print(f'\nwrote {SCHEMA} v{SCHEMA_VERSION} to {path} '
+              f'(local file only -- no network call was made)')
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog='pit-release-gate',
@@ -322,10 +396,32 @@ def main(argv=None):
     ap.add_argument('--export', metavar='PATH',
                     help=f'write the screen result to PATH as a {SCHEMA} '
                          f'v{SCHEMA_VERSION} JSON record (fully offline)')
+    ap.add_argument('--csv', metavar='PATH',
+                    help='screen your own panel instead of running the demo: a CSV '
+                         'with one row per (entity, period). Requires --value')
+    ap.add_argument('--value', metavar='COL', action='append',
+                    help='signal column in --csv; repeat to screen several')
+    ap.add_argument('--period', metavar='COL', default='period',
+                    help='period column in --csv (default: period)')
+    ap.add_argument('--arrival', metavar='COL', default='arrival',
+                    help='arrival-time column in --csv (default: arrival)')
+    ap.add_argument('--size', metavar='COL', default='size',
+                    help='conditioning covariate column in --csv (default: size)')
+    ap.add_argument('--trailing-k', type=int, default=5, metavar='K',
+                    help='prior completed periods the estimate is fitted on (default 5)')
+    ap.add_argument('--threshold', type=float, default=0.10,
+                    help='flag a period when |rho_hat| exceeds this (default 0.10)')
     ap.add_argument('--badge', action='store_true',
                     help='after the demo, print a README badge snippet recording '
                          'that the screen was run (does not change the demo output)')
     a = ap.parse_args(argv)
+
+    if a.csv:
+        if not a.value:
+            ap.error('--csv requires at least one --value COLUMN')
+        return _screen_csv(a)
+    if a.value:
+        ap.error('--value is only meaningful together with --csv')
 
     run = run_demo(n_train=a.train, n_eval=a.n_eval, verbose=True)
     if a.badge:
