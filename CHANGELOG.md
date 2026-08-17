@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 — 2026-08-16
+
+Documentation only. **No change to package behavior:**
+the test suite, including `tests/test_reproduces_paper.py`, is untouched and the
+demo reproduces the same numbers as 0.1.0.
+
+- README: added *Statement of need*, *API overview*, and *Community guidelines*
+  sections.
+
 ## 0.1.0 — 2026-08-15
 
 First public release.
