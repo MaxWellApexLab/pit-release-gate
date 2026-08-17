@@ -20,7 +20,7 @@ This tool measures each signal's susceptibility *before* release and withholds
 only the signals that need it. The screen costs one `fit_trailing` call per
 signal.
 
-![Known-ground-truth demo: naive release is biased exactly when the leak is strong; the gate routes that signal to the deadline and its bias is exactly zero, while benign signals still release at ~36% completeness](docs/assets/demo_bias.png)
+![Known-ground-truth demo: naive release is biased exactly when the leak is strong; the gate routes that signal to the deadline and its bias is exactly zero, while benign signals still release at ~36% completeness](https://raw.githubusercontent.com/MaxWellApexLab/pit-release-gate/master/docs/assets/demo_bias.png)
 
 *The shipped fixed-seed demo, where the right answer is planted: naive early
 release carries a systematic bias of −0.386 on the strong-leak signal; the gate
