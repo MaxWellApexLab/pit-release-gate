@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pit-release-gate"
 version = "0.1.1"
-description = "Completeness-aware release control for staggered-arrival cross-sectional data: a susceptibility-graded gate that blocks incomplete-cross-section leakage without a blanket timeliness penalty"
+description = "Screen quant/ML feature pipelines for look-ahead bias from late-arriving data: measure each signal's leakage susceptibility and gate release until the cross-section is safe"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -23,6 +23,11 @@ keywords = [
     "selection-bias",
     "quantitative-finance",
     "ml-pipelines",
+    "lookahead-bias",
+    "quantitative-finance",
+    "backtesting",
+    "feature-store",
+    "data-snooping",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -46,6 +51,9 @@ dependencies = [
 Homepage = "https://github.com/MaxWellApexLab/pit-release-gate"
 Repository = "https://github.com/MaxWellApexLab/pit-release-gate"
 Paper = "https://doi.org/10.6084/m9.figshare.33158615"
+Changelog = "https://github.com/MaxWellApexLab/pit-release-gate/blob/master/CHANGELOG.md"
+"Audit Registry" = "https://github.com/MaxWellApexLab/pit-audit-registry"
+"Issue Tracker" = "https://github.com/MaxWellApexLab/pit-release-gate/issues"
 
 [project.optional-dependencies]
 dev = [
