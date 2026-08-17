@@ -57,7 +57,7 @@ Changelog = "https://github.com/MaxWellApexLab/pit-release-gate/blob/master/CHAN
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
+    "pytest>=9.1.1",
     "pytest-cov>=4.0",
 ]
 
