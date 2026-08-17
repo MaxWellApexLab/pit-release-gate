@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pit-release-gate"
-version = "0.1.0"
+version = "0.1.1"
 description = "Completeness-aware release control for staggered-arrival cross-sectional data: a susceptibility-graded gate that blocks incomplete-cross-section leakage without a blanket timeliness penalty"
 readme = "README.md"
 requires-python = ">=3.10"

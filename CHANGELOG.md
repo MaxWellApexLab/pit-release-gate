@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.1 — 2026-08-16
+
+Documentation and submission materials only. **No change to package behavior:**
+the test suite, including `tests/test_reproduces_paper.py`, is untouched and the
+demo reproduces the same numbers as 0.1.0.
+
+- `paper.md` and `paper.bib`: software paper prepared for submission to the
+  Journal of Open Source Software.
+- README: added *Statement of need*, *API overview*, and *Community guidelines*
+  sections.
+- CI: `draft-pdf.yml` builds a preview PDF of `paper.md` with the Open Journals
+  toolchain and uploads it as a build artifact.
+
 ## 0.1.0 — 2026-08-15
 
 First public release.

@@ -26,7 +26,7 @@ from .reweight import PropensityReweighter
 from .simulate import DEMO_POLICIES, DEMO_SIGNALS, SEED, demo, main, make_group, run_demo
 from .store import AsOfDataStore
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "AsOfDataStore",
