@@ -115,6 +115,53 @@ A sensitivity sweep of the policy slope κ shows the timeliness–bias dial:
 κ = 2.0 → 100% (bias exactly 0). The demo is deterministic (fixed seed), and
 `tests/test_reproduces_paper.py` asserts these numbers.
 
+## Export your screen result
+
+```bash
+pit-release-gate --export results.json
+```
+
+writes a `pit-screen-results` v1.0 record: per screened signal, how many periods
+were screened, how many the measure flagged, mean and max ρ̂, the required
+completeness that was assigned, and the verdict (`benign` / `susceptible`), plus
+the five settings that produced those verdicts. It is the file a *screened with*
+badge should point at. The format is a standalone versioned interchange spec —
+[`docs/results-schema.md`](docs/results-schema.md) — that any other tool is free
+to emit or consume.
+
+**`--export` is fully offline**: it writes a local file and makes no network
+call. Records carry summary statistics only — never input rows, file paths,
+usernames, hostnames, or any environment detail beyond the tool version — and no
+clock is read while building one, so the same screen always exports byte-identical
+bytes.
+
+If you want to send a result to a registry, you have to say so, every time:
+
+```bash
+pit-release-gate --submit https://registry.example/screens --dry-run   # print, send nothing
+pit-release-gate --submit https://registry.example/screens             # print, then POST
+pit-release-gate --submit https://registry.example/screens --contact you@example.org
+```
+
+`--submit` prints the exact payload before sending it, refuses to send a record
+that fails validation, and fails loudly with a non-zero exit if the network call
+fails. `--contact` is strictly opt-in — without it the field is absent from the
+payload entirely, and it is never written into the `--export` file.
+
+**No telemetry.** Nothing is ever reported anywhere unless `--submit` is typed on
+that invocation. There is no background thread, no `atexit` hook, no anonymous
+usage counter, and nothing to opt out of.
+
+Programmatic use, for screens on your own data:
+
+```python
+from pit_release_gate import build_results, screen_config, summarize_signal, validate_results
+
+sig = summarize_signal("accruals", rhos=[...], phi_reqs=[...], rho_threshold=0.10)
+record = build_results([sig], screen_config(0.10, 0.35, 1.0, trailing_k=8, min_entities=6))
+assert validate_results(record) == []
+```
+
 ## Papers
 
 The method and its evaluation are developed in three public papers:
@@ -145,8 +192,9 @@ susceptible result are equally worth badging; the second one arguably more, beca
 means the screen found something and your pipeline now waits for it.
 
 **Make it point at something.** A badge is worth reading only if there is evidence behind
-it. Commit your screen output — which signals came out benign, which came out susceptible,
-and the required completeness each was assigned — and link the badge at that file rather
+it. Commit your screen output — `pit-release-gate --export results.json` produces exactly
+that file: which signals came out benign, which came out susceptible, and the required
+completeness each was assigned — and link the badge at it rather
 than at this repo. A worked example is the OSAP screen in the
 [PIT audit registry](https://github.com/MaxWellApexLab/pit-audit-registry/blob/main/audits/2026-08_osap/report.md).
 

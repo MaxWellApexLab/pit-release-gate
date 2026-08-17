@@ -18,15 +18,39 @@ ReleaseDecision      the controller's per-evaluation-time output record
 make_group           one synthetic staggered-arrival cross-section (known truth)
 run_demo             the full known-ground-truth worked example (returns dict)
 demo                 same, console-table form
+build_results        assemble a pit-screen-results record (summary stats only)
+validate_results     check such a record; returns a list of problems
+submit_results       opt-in POST of a record, never called on its own
 """
+# defined first: results.tool_version() reads it while the submodules below
+# are still importing
+__version__ = "0.1.1"
+
 from .controller import ReleaseController, ReleaseDecision
 from .gate import SusceptibilityGate
 from .monitor import CompletenessMonitor
+from .results import (
+    SCHEMA,
+    SCHEMA_VERSION,
+    build_results,
+    screen_config,
+    summarize_signal,
+    validate_results,
+    write_results,
+)
 from .reweight import PropensityReweighter
-from .simulate import DEMO_POLICIES, DEMO_SIGNALS, SEED, demo, main, make_group, run_demo
+from .simulate import (
+    DEMO_POLICIES,
+    DEMO_SIGNALS,
+    SEED,
+    demo,
+    main,
+    make_group,
+    results_from_demo,
+    run_demo,
+)
 from .store import AsOfDataStore
-
-__version__ = "0.1.1"
+from .submit import SubmissionError, submit_results
 
 __all__ = [
     "AsOfDataStore",
@@ -42,5 +66,15 @@ __all__ = [
     "SEED",
     "DEMO_SIGNALS",
     "DEMO_POLICIES",
+    "SCHEMA",
+    "SCHEMA_VERSION",
+    "summarize_signal",
+    "screen_config",
+    "build_results",
+    "validate_results",
+    "write_results",
+    "results_from_demo",
+    "submit_results",
+    "SubmissionError",
     "__version__",
 ]
