@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+Screen-result export. **No change to package behavior:**
+`tests/test_reproduces_paper.py` is untouched and the demo reproduces the same
+numbers as 0.1.1.
+
+- `--export PATH` writes a `pit-screen-results` v1.0 record — per-signal summary
+  statistics and the screen settings that produced the verdicts. Fully offline
+  (local file, no network call) and free of clocks, so the same screen exports
+  byte-identical bytes.
+- `docs/results-schema.md`: the schema as a standalone versioned interchange
+  spec, free for other tools to adopt.
+- New module `pit_release_gate.results`: `summarize_signal`, `screen_config`,
+  `build_results`, `validate_results`, `write_results`. Totals are derived, so
+  they cannot disagree with the per-signal rows.
+- Still no telemetry of any kind, now enforced structurally rather than by
+  policy: no module in the package imports a transport, and a test asserts that
+  over every module — no background thread, no `atexit` hook, nothing to opt
+  out of.
+
 ## 0.1.1 — 2026-08-16
 
 Documentation and submission materials only. **No change to package behavior:**
