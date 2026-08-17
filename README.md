@@ -3,42 +3,50 @@
 [![CI](https://github.com/MaxWellApexLab/pit-release-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/MaxWellApexLab/pit-release-gate/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/MaxWellApexLab/pit-release-gate/branch/master/graph/badge.svg)](https://codecov.io/gh/MaxWellApexLab/pit-release-gate)
 [![PyPI](https://img.shields.io/pypi/v/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
-[![Downloads](https://img.shields.io/pypi/dm/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
-[![Python](https://img.shields.io/pypi/pyversions/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PIT Hygiene](https://img.shields.io/badge/PIT%20Hygiene-pledged-2ea44f)](https://github.com/MaxWellApexLab/pit-hygiene)
 
 Completeness-aware release control for staggered-arrival cross-sectional data.
 
-When the entities of a cross-section report on staggered dates — companies filing
-financial statements are the canonical case — any same-period cross-sectional signal
-computed before the last filer arrives is estimated from an incomplete, and possibly
-*selectively* incomplete, cross-section. If filing timing depends on the very
-disturbance the signal measures, releasing early produces a systematic bias
-(incomplete-cross-section leakage), while a blanket wait-for-the-deadline rule removes
-the bias at a timeliness cost paid by every signal, biased or not. `pit-release-gate`
-measures each signal's susceptibility to this bias — a disturbance-conditional partial
-correlation fitted honestly on prior *completed* periods — and grades the required
-completeness per signal, so benign signals release early and susceptible signals are
-withheld until enough of the cross-section has arrived to suppress the bias.
+**[Audit registry](https://github.com/MaxWellApexLab/pit-audit-registry) ·
+[Pledge](https://github.com/MaxWellApexLab/pit-hygiene) ·
+[Papers](#papers) ·
+[Result schema](docs/results-schema.md)**
 
-## Statement of need
+Rebuilt from as-filed SEC EDGAR filings, on observed filing dates, **7 of 14
+standard fundamental signals are contaminated** by incomplete-cross-section
+leakage — [measured, reproducibly, in the companion registry](https://github.com/MaxWellApexLab/pit-audit-registry/blob/main/methodology/2026-08_sec-edgar/report.md).
+This tool measures each signal's susceptibility *before* release and withholds
+only the signals that need it. The screen costs one `fit_trailing` call per
+signal.
 
-Point-in-time discipline in ML pipelines currently rests on tooling that answers one
-question: *was this value readable at time t?* Feature-store as-of joins, bitemporal
-and vintage-aware storage, and purged or embargoed cross-validation all enforce
-read-time correctness, and they do it well.
+![Known-ground-truth demo: naive release is biased exactly when the leak is strong; the gate routes that signal to the deadline and its bias is exactly zero, while benign signals still release at ~36% completeness](docs/assets/demo_bias.png)
 
-None of them answers a second question: given that every value read was legitimately
-readable, was the *set* of entities that had reported by t a selected sample? An
-as-of join over an incomplete cross-section is a correct join over a biased sample.
-The two failures need different remedies — the first is fixed by timestamp hygiene,
-the second only by waiting or by an explicit correction. Researchers building
-cross-sectional signals on staggered-arrival panels have had no routine, per-signal
-screen for the second. `pit-release-gate` is that screen, plus the release controller
-that acts on it: one `fit_trailing` call per signal, so reporting a susceptibility
-estimate alongside a released signal costs about as much as reporting a standard
-error.
+*The shipped fixed-seed demo, where the right answer is planted: naive early
+release carries a systematic bias of −0.386 on the strong-leak signal; the gate
+routes it to the deadline (bias exactly 0.0) while releasing the two benign
+signals at 36–39% completeness. `tests/test_reproduces_paper.py` pins these
+numbers; [`tools/make_readme_chart.py`](tools/make_readme_chart.py) redraws
+this figure from the live demo.*
+
+**You need this if:**
+
+- you build **same-period cross-sectional signals** — industry-adjusted ratios,
+  cross-sectional ranks, peer medians — on entities that report on their own
+  schedule;
+- you **rebuild panels from as-filed sources** (EDGAR `companyfacts`, raw
+  filings) instead of using a vendor's curated release;
+- you own a **feature-store pipeline** where an as-of join reads whatever has
+  arrived by *t*;
+- you want a **per-signal susceptibility number** published next to every
+  released signal, the way a standard error is.
+
+**Not for you if** you are hunting look-ahead bugs in a backtest engine, or your
+data has no arrival times — that is a different failure mode
+([scope statement](https://github.com/MaxWellApexLab/pit-audit-registry#what-gets-screened)).
+
+**No telemetry — structurally, not merely by default:** no module in this
+package imports a transport, and [a test enforces that over every module](tests/test_export.py).
 
 ## Install
 
@@ -76,6 +84,20 @@ values, and per-entity filing-arrival times, then call
 `ReleaseController.decide(store, t)` at each evaluation time — it returns
 `WITHHOLD`, `REWEIGHT_RELEASE`, or `RELEASE` plus the released values.
 
+## What this catches that your current tools don't
+
+| guarantee | as-of join / bitemporal store | purged & embargoed CV | **pit-release-gate** |
+|---|---|---|---|
+| No value was read before it was available | ✅ | — | assumed as input (bring your arrival times) |
+| Train and test don't overlap through time | — | ✅ | — |
+| The **set of entities** present at *t* was not selected on the disturbance | ❌ | ❌ | **✅ measured per signal (ρ̂), gated per signal** |
+
+A point-in-time-correct join over an incomplete cross-section is a correct join
+over a biased sample. [Statement of need](#statement-of-need) has the full
+argument; the
+[as-of join methodology page](https://github.com/MaxWellApexLab/pit-audit-registry/blob/main/methodology/2026-08_feast-pit-join/report.md)
+has the measured demonstration.
+
 ## API overview
 
 Five public components, all importable from the top-level `pit_release_gate` package:
@@ -100,6 +122,16 @@ so the right answer is known exactly and no licensed data is needed:
 pit-release-gate            # or: python -m pit_release_gate
 ```
 
+Real output, abridged to the signal the gate exists for:
+
+```text
+Strong-leak  (c_a=1.0, c_x=0.7)   rho_trailing=-0.868 (fitted ex ante)  (SUSCEPTIBLE -> wait)
+  policy        comp% [95%CI]    flip% [95%CI]   biasB(signed) [CI]   route
+  naive           35 ± 0.0      63.6 ± 2.8     -0.386 ±0.037   naive
+  deadline       100 ± 0.0       0.0 ± 0.0     +0.000 ±0.000   deadline
+  gated          100 ± 0.0       0.0 ± 0.0     +0.000 ±0.000   gated(phi_req=1.00)  <-- gated
+```
+
 It compares five release policies (`naive`, `threshold`, `reweight`, `deadline`,
 `gated`) on four signal types. Headline behavior:
 
@@ -114,6 +146,32 @@ A sensitivity sweep of the policy slope κ shows the timeliness–bias dial:
 κ = 0.5 → release at 59% completeness (bias −0.229); κ = 1.0 → 83% (−0.118);
 κ = 2.0 → 100% (bias exactly 0). The demo is deterministic (fixed seed), and
 `tests/test_reproduces_paper.py` asserts these numbers.
+
+## Statement of need
+
+When the entities of a cross-section report on staggered dates — companies filing
+financial statements are the canonical case — any same-period cross-sectional signal
+computed before the last filer arrives is estimated from an incomplete, and possibly
+*selectively* incomplete, cross-section. If filing timing depends on the very
+disturbance the signal measures, releasing early produces a systematic bias
+(incomplete-cross-section leakage), while a blanket wait-for-the-deadline rule removes
+the bias at a timeliness cost paid by every signal, biased or not.
+
+Point-in-time discipline in ML pipelines currently rests on tooling that answers one
+question: *was this value readable at time t?* Feature-store as-of joins, bitemporal
+and vintage-aware storage, and purged or embargoed cross-validation all enforce
+read-time correctness, and they do it well.
+
+None of them answers a second question: given that every value read was legitimately
+readable, was the *set* of entities that had reported by t a selected sample? An
+as-of join over an incomplete cross-section is a correct join over a biased sample.
+The two failures need different remedies — the first is fixed by timestamp hygiene,
+the second only by waiting or by an explicit correction. Researchers building
+cross-sectional signals on staggered-arrival panels have had no routine, per-signal
+screen for the second. `pit-release-gate` is that screen, plus the release controller
+that acts on it: one `fit_trailing` call per signal, so reporting a susceptibility
+estimate alongside a released signal costs about as much as reporting a standard
+error.
 
 ## Export your screen result
 
@@ -136,12 +194,9 @@ clock is read while building one, so the same screen always exports byte-identic
 bytes.
 
 Where the record goes afterwards is entirely your business — commit it next to
-your badge, publish it, or keep it. This tool does not send it anywhere.
-
-**No telemetry — structurally, not merely by default.** No module in this
-package imports a transport at all, and a test walks every module in the package
-and fails the suite if one ever does. There is no background thread, no `atexit`
-hook, no anonymous usage counter, and nothing to opt out of.
+your badge, publish it, or keep it. This tool does not send it anywhere. There is
+no background thread, no `atexit` hook, no anonymous usage counter, and nothing
+to opt out of.
 
 Programmatic use, for screens on your own data:
 
