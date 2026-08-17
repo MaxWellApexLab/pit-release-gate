@@ -33,7 +33,7 @@ jobs:
       - run: pytest -q --cov=pit_release_gate --cov-report=xml
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
