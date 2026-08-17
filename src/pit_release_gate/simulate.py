@@ -15,12 +15,24 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 
-from .controller import ReleaseController, ReleaseDecision, _ols_resid
+from .controller import MIN_ENTITIES, ReleaseController, ReleaseDecision, _ols_resid
 from .gate import SusceptibilityGate
+from .results import (
+    SCHEMA,
+    SCHEMA_VERSION,
+    build_results,
+    screen_config,
+    summarize_signal,
+    write_results,
+)
 from .reweight import PropensityReweighter
 from .store import AsOfDataStore
 
 SEED = 20260601
+
+#: Susceptibility threshold the demo screen runs at (|rho_hat| above it is
+#: susceptible). Named so the exported screen record cannot drift from it.
+DEMO_RHO_THRESHOLD = 0.10
 
 #: The four planted-truth signal configurations reported in the demo:
 #: (key, label, c_a, c_x)
@@ -113,10 +125,17 @@ def run_demo(n_train=10, n_eval=60, verbose=True) -> dict:
 
     for key, name, c_a, c_x in DEMO_SIGNALS:
         # --- honest trailing estimation on prior completed periods ---
-        gate = SusceptibilityGate(threshold=0.10)
+        gate = SusceptibilityGate(threshold=DEMO_RHO_THRESHOLD)
         train = [make_group(n=120, c_a=c_a, c_x=c_x, rng=rng) for _ in range(n_train)]
         rho_tr = gate.fit_trailing(train)
         ctrl = ReleaseController(gate=gate)
+        # the settings that produced the verdicts, recorded for --export
+        # (identical for every signal; the kappa sweep below is separate)
+        results['config'] = screen_config(rho_threshold=gate.threshold,
+                                          phi_min=ctrl.phi_min,
+                                          kappa=ctrl.suscept_slope,
+                                          trailing_k=n_train,
+                                          min_entities=MIN_ENTITIES)
         # --- evaluation on fresh periods, gated with the FROZEN estimate ---
         agg = {p: {'comp': [], 'flip': [], 'bias': [], 'act': []} for p in policies}
         rho_realized = []
@@ -133,8 +152,11 @@ def run_demo(n_train=10, n_eval=60, verbose=True) -> dict:
 
         sig = {'label': name, 'c_a': c_a, 'c_x': c_x,
                'rho_trailing': rho_tr,
+               'rho_realized': [float(r) for r in rho_realized],
                'rho_realized_mean': float(np.mean(rho_realized)),
                'rho_realized_std': float(np.std(rho_realized)),
+               # constant across periods: the gate runs on the FROZEN estimate
+               'phi_req': ctrl.required_completeness(rho_tr),
                'susceptible': bool(gate.is_susceptible(rho_tr)),
                'policies': {}}
         for p in policies:
@@ -164,7 +186,7 @@ def run_demo(n_train=10, n_eval=60, verbose=True) -> dict:
     if verbose:
         print("\n" + "-" * 96)
         print("Sensitivity: required-completeness slope kappa on Mild-leak (c_a=0.3, c_x=0.7)")
-    gate = SusceptibilityGate(threshold=0.10)
+    gate = SusceptibilityGate(threshold=DEMO_RHO_THRESHOLD)
     train = [make_group(n=120, c_a=0.3, c_x=0.7, rng=rng) for _ in range(n_train)]
     rho_tr = gate.fit_trailing(train)
     for kappa in [0.5, 1.0, 2.0]:
@@ -212,17 +234,59 @@ def demo(n_train=10, n_eval=60):
     return run_demo(n_train=n_train, n_eval=n_eval, verbose=True)
 
 
+def results_from_demo(run: dict, date: str = None) -> dict:
+    """Reduce a :func:`run_demo` result to a ``pit-screen-results`` record.
+
+    Only summary statistics survive the reduction: per signal, the number of
+    screened periods, how many of them the susceptibility measure flagged,
+    the mean and maximum |rho_hat|, the required completeness the controller
+    assigned, and the verdict. The simulated cross-sections themselves stay
+    on this machine.
+
+    ``date`` is optional and caller-supplied; nothing here reads a clock, so
+    the same screen always reduces to the same record.
+    """
+    threshold = run['config']['rho_threshold']
+    signals = [
+        summarize_signal(
+            key,
+            rhos=sig['rho_realized'],
+            phi_reqs=[sig['phi_req']] * len(sig['rho_realized']),
+            rho_threshold=threshold,
+            # the verdict the screen actually acted on: the frozen trailing
+            # estimate, not the ex-post realized ones summarized above
+            susceptible=sig['susceptible'],
+        )
+        for key, sig in run['signals'].items()
+    ]
+    return build_results(signals, run['config'], date=date)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog='pit-release-gate',
         description='Run the self-contained known-ground-truth demo of the '
-                    'completeness-aware release controller.')
+                    'completeness-aware release controller.',
+        epilog='This tool never reports anything, anywhere. --export writes a '
+               'local file and makes no network call; the package opens no '
+               'socket at all.')
     ap.add_argument('--train', type=int, default=10,
                     help='number of prior completed periods used to fit rho_hat (default 10)')
     ap.add_argument('--eval', dest='n_eval', type=int, default=60,
                     help='number of fresh evaluation periods (default 60)')
+    ap.add_argument('--export', metavar='PATH',
+                    help=f'write the screen result to PATH as a {SCHEMA} '
+                         f'v{SCHEMA_VERSION} JSON record (fully offline)')
     a = ap.parse_args(argv)
-    run_demo(n_train=a.train, n_eval=a.n_eval, verbose=True)
+
+    run = run_demo(n_train=a.train, n_eval=a.n_eval, verbose=True)
+    if not a.export:
+        return
+
+    record = results_from_demo(run)
+    path = write_results(record, a.export)
+    print(f'\nwrote {SCHEMA} v{SCHEMA_VERSION} to {path} '
+          f'(local file only -- no network call was made)')
 
 
 if __name__ == '__main__':

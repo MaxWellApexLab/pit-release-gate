@@ -10,6 +10,11 @@ from .monitor import CompletenessMonitor
 from .reweight import PropensityReweighter
 from .store import AsOfDataStore
 
+#: Minimum number of arrived entities before anything is released; below it a
+#: cross-section is too small for the residualization to mean much. Named here
+#: so a screen record can report the floor it ran under.
+MIN_ENTITIES = 6
+
 
 def _ols_resid(X: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> np.ndarray:
     if w is None:
@@ -70,11 +75,11 @@ class ReleaseController:
 
         # fixed baseline policies (for comparison / fallback configs) ----
         if policy == 'naive':
-            if comp < self.phi_min or m.sum() < 6:
+            if comp < self.phi_min or m.sum() < MIN_ENTITIES:
                 return ReleaseDecision('WITHHOLD', t, comp, policy=policy)
             return self._emit(store, t, m, None, 'RELEASE', policy)
         if policy == 'threshold':
-            if comp < self.phi_high or m.sum() < 6:
+            if comp < self.phi_high or m.sum() < MIN_ENTITIES:
                 return ReleaseDecision('WITHHOLD', t, comp, policy=policy)
             return self._emit(store, t, m, None, 'RELEASE', policy)
         if policy == 'deadline':
@@ -82,7 +87,7 @@ class ReleaseController:
                 return ReleaseDecision('WITHHOLD', t, comp, policy=policy)
             return self._emit(store, t, m, None, 'RELEASE', policy)
         if policy == 'reweight':
-            if comp < self.phi_min or m.sum() < 6:
+            if comp < self.phi_min or m.sum() < MIN_ENTITIES:
                 return ReleaseDecision('WITHHOLD', t, comp, policy=policy)
             w = self.reweighter.weights(store, t)
             return self._emit(store, t, m, w, 'REWEIGHT_RELEASE', policy)
@@ -95,7 +100,7 @@ class ReleaseController:
         # bias, up to the statutory deadline (completeness=1.0).
         rho = self.gate.rho_hat(store)
         phi_req = self.required_completeness(rho)
-        if (comp >= phi_req or t >= 1.0) and m.sum() >= 6:
+        if (comp >= phi_req or t >= 1.0) and m.sum() >= MIN_ENTITIES:
             return self._emit(store, t, m, None, 'RELEASE', f'gated(phi_req={phi_req:.2f})')
         return ReleaseDecision('WITHHOLD', t, comp, policy=f'gated(phi_req={phi_req:.2f})')
 
