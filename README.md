@@ -5,6 +5,7 @@
 [![PyPI](https://img.shields.io/pypi/v/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
 [![Python](https://img.shields.io/pypi/pyversions/pit-release-gate)](https://pypi.org/project/pit-release-gate/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PIT Hygiene](https://img.shields.io/badge/PIT%20Hygiene-pledged-2ea44f)](https://github.com/MaxWellApexLab/pit-hygiene)
 
 Completeness-aware release control for staggered-arrival cross-sectional data.
 
