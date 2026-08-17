@@ -262,6 +262,51 @@ def results_from_demo(run: dict, date: str = None) -> dict:
     return build_results(signals, run['config'], date=date)
 
 
+BADGE_MARKDOWN = (
+    '[![screened with pit-release-gate]'
+    '(https://img.shields.io/badge/screened%20with-pit--release--gate-blue)]'
+    '(https://github.com/MaxWellApexLab/pit-release-gate)'
+)
+
+
+def badge_snippet(results) -> str:
+    """README badge markdown for a completed screen, with a rho_hat summary.
+
+    Pure formatting over an existing ``run_demo`` result -- it reads the
+    result dict and returns a string. It performs no estimation and changes
+    no numerical behavior.
+
+    The badge states that the screen was RUN. It is deliberately not a
+    pass/fail claim: a susceptible verdict is as worth reporting as a
+    benign one.
+    """
+    try:
+        from . import __version__ as version
+    except ImportError:                                # pragma: no cover
+        version = ''
+
+    sigs = results['signals']
+    keys = [k for k, *_ in DEMO_SIGNALS if k in sigs]
+    n_susc = sum(bool(sigs[k]['susceptible']) for k in keys)
+    rhos = ' | '.join(f"{k} {sigs[k]['rho_trailing']:+.3f}" for k in keys)
+
+    rule = '-' * 72
+    return '\n'.join([
+        rule,
+        'Badge snippet (paste into your README):',
+        '',
+        BADGE_MARKDOWN,
+        '',
+        f'<!-- screened with pit-release-gate {version}',
+        f'     {len(keys)} signals: {len(keys) - n_susc} benign, {n_susc} susceptible',
+        f'     rho_hat: {rhos} -->',
+        '',
+        'The badge states that the screen was RUN, not that anything passed.',
+        'Point it at your own screen output to make it worth clicking.',
+        rule,
+    ])
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog='pit-release-gate',
@@ -277,9 +322,15 @@ def main(argv=None):
     ap.add_argument('--export', metavar='PATH',
                     help=f'write the screen result to PATH as a {SCHEMA} '
                          f'v{SCHEMA_VERSION} JSON record (fully offline)')
+    ap.add_argument('--badge', action='store_true',
+                    help='after the demo, print a README badge snippet recording '
+                         'that the screen was run (does not change the demo output)')
     a = ap.parse_args(argv)
 
     run = run_demo(n_train=a.train, n_eval=a.n_eval, verbose=True)
+    if a.badge:
+        print()
+        print(badge_snippet(run))
     if not a.export:
         return
 

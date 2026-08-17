@@ -20,6 +20,7 @@ run_demo             the full known-ground-truth worked example (returns dict)
 demo                 same, console-table form
 build_results        assemble a pit-screen-results record (summary stats only)
 validate_results     check such a record; returns a list of problems
+badge_snippet        README badge markdown for a completed screen run
 """
 # defined first: results.tool_version() reads it while the submodules below
 # are still importing
@@ -42,6 +43,7 @@ from .simulate import (
     DEMO_POLICIES,
     DEMO_SIGNALS,
     SEED,
+    badge_snippet,
     demo,
     main,
     make_group,
@@ -61,6 +63,7 @@ __all__ = [
     "run_demo",
     "demo",
     "main",
+    "badge_snippet",
     "SEED",
     "DEMO_SIGNALS",
     "DEMO_POLICIES",
