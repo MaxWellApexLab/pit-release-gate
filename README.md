@@ -84,6 +84,52 @@ values, and per-entity filing-arrival times, then call
 `ReleaseController.decide(store, t)` at each evaluation time — it returns
 `WITHHOLD`, `REWEIGHT_RELEASE`, or `RELEASE` plus the released values.
 
+## Screen your own panel
+
+One long table — one row per (entity, period) — and one call. The table can be
+a pandas DataFrame, a polars DataFrame, a pyarrow Table, or a dict of arrays:
+columns are read by duck typing, so the screen itself depends on no dataframe
+library.
+
+```python
+from pit_release_gate import screen_dataframe
+
+record = screen_dataframe(
+    panel,                      # columns: period, arrival, value, size
+    value=["accruals", "roa"],  # one signal or several
+    trailing_k=5,               # fit on 5 prior COMPLETED periods, then freeze
+)
+for s in record["signals"]:
+    print(s["name"], s["verdict"], s["periods_flagged"], "/", s["periods_screened"])
+```
+
+Or without writing any Python:
+
+```bash
+pit-release-gate --csv panel.csv --value accruals --value roa --export results.json
+```
+
+```text
+screened panel.csv: 2 signal(s), trailing_k=5, threshold=0.1
+  signal                    periods  flagged   mean rho  max |rho|  phi_req  verdict
+  accruals                        7        7    -0.8721     0.8841    1.000  susceptible
+  roa                             7        0    +0.0268     0.0564    0.377  benign
+  totals: 1 benign, 1 susceptible, 14 signal-cycles screened
+```
+
+This is the same frozen protocol the [published audits](https://github.com/MaxWellApexLab/pit-audit-registry)
+use: the estimate applied to a period is never fitted on that period, and the
+first `trailing_k` periods are used for fitting only. The output is a
+`pit-screen-results` v1.0 record — the file a *screened with* badge should
+point at.
+
+**One caveat, stated up front.** A verdict fires if any single screened period
+crosses the threshold, so it inherits that period's sampling noise
+(roughly `1 / sqrt(trailing_k x entities_per_period)`). On a small panel,
+a reading just over the threshold may be noise. Establish your noise floor
+first — screen a signal you expect to be unexposed, or shuffle arrival order
+within periods and re-screen — before treating a marginal verdict as a finding.
+
 ## What this catches that your current tools don't
 
 | guarantee | as-of join / bitemporal store | purged & embargoed CV | **pit-release-gate** |

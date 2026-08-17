@@ -9,6 +9,8 @@ signal is never handed to a downstream trading or training stage.
 
 Public API
 ----------
+screen_dataframe     screen a long table (pandas/polars/dict) -> results record
+stores_from_frame    the per-period stores that screen builds, for inspection
 AsOfDataStore        staggered-arrival records for one (period, group)
 CompletenessMonitor  arrived-fraction and composition-shift gauges
 PropensityReweighter optional IPW composition-correction module
@@ -27,6 +29,7 @@ badge_snippet        README badge markdown for a completed screen run
 __version__ = "0.1.1"
 
 from .controller import ReleaseController, ReleaseDecision
+from .frame import screen_dataframe, stores_from_frame
 from .gate import SusceptibilityGate
 from .monitor import CompletenessMonitor
 from .results import (
@@ -54,6 +57,8 @@ from .store import AsOfDataStore
 
 __all__ = [
     "AsOfDataStore",
+    "screen_dataframe",
+    "stores_from_frame",
     "CompletenessMonitor",
     "PropensityReweighter",
     "SusceptibilityGate",
