@@ -108,8 +108,8 @@ Linux and Windows against Python 3.10 and 3.13.
 # Acknowledgements
 
 The methodology preprints cited above are co-authored with Kuan-I Wu; the software
-described here was designed and written solely by the author. AI-based tools were
-used for surface-level language editing and debugging assistance; all original code
-and the research design are the author's own.
+described here was designed and written solely by the author. The author used
+AI-assisted drafting tools in preparing this manuscript; all technical content,
+experiments, and claims were designed, executed, and verified by the author.
 
 # References
