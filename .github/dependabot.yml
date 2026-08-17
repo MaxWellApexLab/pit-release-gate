@@ -1,0 +1,24 @@
+version: 2
+
+updates:
+  # The package pins no runtime dependencies beyond numpy/scipy, but the test
+  # and CI toolchain moves. Weekly PRs keep the reproduction honest against
+  # current versions rather than the ones that happened to be installed on the
+  # day of release.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: deps
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci

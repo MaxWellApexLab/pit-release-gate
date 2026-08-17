@@ -4,6 +4,13 @@ on:
   push:
     branches: [master]
   pull_request:
+  # A package whose claim is reproducibility should keep proving it. The
+  # weekly run re-asserts the paper's numbers against whatever numpy, scipy
+  # and Python resolve to that week, so drift surfaces here rather than in a
+  # reader's environment.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
