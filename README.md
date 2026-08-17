@@ -128,6 +128,30 @@ The method and its evaluation are developed in three public papers:
 This package is the reference implementation of paper 3's release controller; its
 demo reproduces the paper's controlled experiment.
 
+## Badge
+
+If you have run the susceptibility screen on your own data — whatever the result — you
+are welcome to say so:
+
+```markdown
+[![screened with pit-release-gate](https://img.shields.io/badge/screened%20with-pit--release--gate-blue)](https://github.com/MaxWellApexLab/pit-release-gate)
+```
+
+The badge reads **screened with**, not *passed* — it states that the screen was run, the
+same way a formatter badge states that the formatter was run. A benign result and a
+susceptible result are equally worth badging; the second one arguably more, because it
+means the screen found something and your pipeline now waits for it.
+
+**Make it point at something.** A badge is worth reading only if there is evidence behind
+it. Commit your screen output — which signals came out benign, which came out susceptible,
+and the required completeness each was assigned — and link the badge at that file rather
+than at this repo. A worked example is the OSAP screen in the
+[PIT audit registry](https://github.com/MaxWellApexLab/pit-audit-registry/blob/main/audits/2026-08_osap/report.md).
+
+**Related:** the [PIT Hygiene pledge](https://github.com/MaxWellApexLab/pit-hygiene) is a
+broader, tool-neutral statement about how a staggered-arrival pipeline is built; this badge
+is the narrower statement that this particular screen was run.
+
 ## Cite this
 
 See [`CITATION.cff`](CITATION.cff). If you use this software, please cite paper 3:
