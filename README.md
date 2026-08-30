@@ -11,6 +11,7 @@ Completeness-aware release control for staggered-arrival cross-sectional data.
 **[Audit registry](https://github.com/MaxWellApexLab/pit-audit-registry) ·
 [Pledge](https://github.com/MaxWellApexLab/pit-hygiene) ·
 [Papers](#papers) ·
+[Worked example: pandas DataFrame](docs/from-dataframe.md) ·
 [Result schema](docs/results-schema.md)**
 
 Rebuilt from as-filed SEC EDGAR filings, on observed filing dates, **7 of 14
