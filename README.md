@@ -255,9 +255,27 @@ record = build_results([sig], screen_config(0.10, 0.35, 1.0, trailing_k=8, min_e
 assert validate_results(record) == []
 ```
 
+## External references
+
+- Listed in [awesome-quant](https://github.com/wilsonfreitas/awesome-quant)
+  (Factor Analysis section).
+- The worked pandas example in the docs was contributed by an external
+  contributor ([#9](https://github.com/MaxWellApexLab/pit-release-gate/pull/9)).
+- The output record format is a separately versioned public spec
+  ([`docs/results-schema.md`](docs/results-schema.md)) so other tools can emit
+  or consume screen results without importing this package.
+- Seen in the wild: the gate and controller were read line by line in
+  QMX's systematic survey of backtest-safety tooling. Their quality
+  verdict: "clean, small, and does real statistics ... worth reading as a
+  design reference". The selection-on-arrival distinction now sits in
+  their design ledger as [row 78](https://github.com/MubarakHimself/QMX/blob/af6628888fb8901bf9e877cbd07e438dbb0f39b4/workroom/reference/03-wave2-supplement.md).
+  No formal citation, and none needed; traveling is the point.
+
 ## Papers
 
-The method and its evaluation are developed in three public papers:
+The method and its evaluation are developed in three public preprints
+(paper 3 is under review at an IEEE conference; papers are self-archived
+with DOIs pending journal publication):
 
 1. **Correct-by-Construction Factor Computation: A Verifiably Point-in-Time Engine
    for Tradeable Signals** — [doi:10.6084/m9.figshare.32952482](https://doi.org/10.6084/m9.figshare.32952482)
@@ -323,8 +341,12 @@ See [`CITATION.cff`](CITATION.cff). If you use this software, please cite paper 
 
 MIT — see [LICENSE](LICENSE).
 
-Patent pending: this software implements techniques described in pending U.S.
-patent applications. The MIT license above governs use of this code.
+An additional patent grant covers this implementation — see [PATENTS](PATENTS).
+Max Well Apex LLC holds pending U.S. patent applications on techniques this
+software implements; the PATENTS file grants a royalty-free license to the
+claims necessarily practiced by this implementation, with the customary
+termination-on-litigation clause. In short: using, modifying, and shipping
+this code is safe; the grant follows the Go project's PATENTS model.
 
 ---
 
